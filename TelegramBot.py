@@ -37,7 +37,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE, bot
         else:
             response: str = await handle_response(text)
 
-        print('Bot: ', response)
+        print('Bot response: ', response)
         await update.message.reply_text(response)
     except Exception as e:
         print('Doslo k chybe', e)
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', start_command))
     app.add_handler(CommandHandler('help', help_command))
     # Messages
-    handle_message_partial = functools.partial(handle_message, botUserName=data['TelegramBotName'])
+    handle_message_partial = functools.partial(handle_message, bot_user_name=data['TelegramBotName'])
     app.add_handler(MessageHandler(filters.TEXT, handle_message_partial))
     # Errors
     # Polling
