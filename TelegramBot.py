@@ -1,19 +1,31 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackContext
 import json
 import datetime
+import matplotlib.pyplot as plt
 
 ALLERGIES, SYMPTOMS = range(2)
 DATA_FILE = 'user_data.json'
 
 def save_data(data):
-    with open (DATA_FILE, 'a') as file:
-        json.dump(data, file)
-        file.write('\n')
+    with open(DATA_FILE, 'r+') as file:
+        try:
+            with open(DATA_FILE, 'r+') as file:
+                # Načtení obsahu existujícího JSON souboru
+                existing_data = json.load(file)
+        except json.decoder.JSONDecodeError:
+            existing_data = []
+
+        # Přidání nového záznamu do existujících dat
+        existing_data.append(data)
+
+        # Zápis všech dat zpět do souboru
+        with open(DATA_FILE, 'w') as file:
+            json.dump(existing_data, file, indent=3)
 # Commands
 
 def load_data():
-    with open(DATA_FILE, "r") as file:
+    with open(DATA_FILE, 'r') as file:
         data = file.read()
     return data
 
@@ -38,7 +50,7 @@ async def alergie_symptoms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time = 'Time stamp'
     time_stamp = datetime.datetime.now()
 
-    user_data = {user_id: selected_symptoms, time: time_stamp.strftime('%d-%m-%Y %H:%M:%S')}
+    user_data = [{'user_id': user_id, 'selected_symptom': selected_symptoms, time: time_stamp.strftime('%d-%m-%Y %H:%M:%S')}]
     save_data(user_data)
 
     await update.message.reply_text(f"Vybrali jste: {selected_symptoms}. Děkuji!")
@@ -50,6 +62,18 @@ async def handle_response(text: str) -> str:
     processed: str = text.lower()
     return processed
 
+async  def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        with open('user_data.json', 'r') as file:
+            data_loc = json.load(file)
+            print('loaded data from json file')
+
+        if update
+
+        await update.message.reply_text('Done')
+    except Exception as e:
+        print('Doslo k chybe pri nacitani souboru', e)
+        await update.message.reply_text('Doslo k chybe pri nacitani souboru')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE, bot_user_name: str):
 
@@ -96,6 +120,7 @@ if __name__ == '__main__':
         },
         fallbacks=[],
     )
+    app.add_handler(CommandHandler('report', report))
     app.add_handler(conv_handler)
     # Messages
     #handle_message_partial = functools.partial(handle_message, bot_user_name=data['TelegramBotName'])
