@@ -2,8 +2,11 @@ from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackContext
 import json
 import datetime
+import logging
 import matplotlib.pyplot as plt
 
+logger = logging.getLogger('botlogger')
+logging.basicConfig(filename='botlogger.log', encoding='utf-8', level=logging.DEBUG)
 ALLERGIES, SYMPTOMS = range(2)
 DATA_FILE = 'user_data.json'
 
@@ -66,12 +69,14 @@ async  def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         with open('user_data.json', 'r') as file:
             data_loc = json.load(file)
+            logger.info('Loaded data from config file')
             print('loaded data from json file')
 
-        if update
+        #if update:
 
         await update.message.reply_text('Done')
     except Exception as e:
+        logger.exception('Error during loading of config file')
         print('Doslo k chybe pri nacitani souboru', e)
         await update.message.reply_text('Doslo k chybe pri nacitani souboru')
 
@@ -82,7 +87,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE, bot
         text: str = update.message.text
 
         print(f'User ({update.message.chat.id}) in {message_type}: {text}')
-
+        logger.info(f'User ({update.message.chat.id}) in {message_type}: {text}')
         if message_type == 'group':
             if bot_user_name in text:
                 new_text: str = text.replace(bot_user_name, '').strip()
@@ -95,18 +100,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE, bot
         print('Bot response: ', response)
         await update.message.reply_text(response)
     except Exception as e:
+        logger.error('Doslo k chybe')
         print('Doslo k chybe', e)
 
 if __name__ == '__main__':
-    print('reading config file')
+    logger.info('Reading config file')
+    print('Reading config file')
     try:
         f = open('config.json')
         data = json.load(f)
         f.close()
     except Exception as e:
+        logger.exception('Config file reading error')
         print("Došlo k chybě při čtení konfiguračního souboru:", e)
         exit()
 
+    logger.info('starting the bot')
     print('starting bot')
     app = Application.builder().token(data['TelegramApiKey']).build()
     # Commands
@@ -127,5 +136,7 @@ if __name__ == '__main__':
     #app.add_handler(MessageHandler(filters.TEXT, handle_message_partial))
     # Errors
     # Polling
+    logger.info('Polling')
     print('polling')
     app.run_polling(poll_interval=3)
+
